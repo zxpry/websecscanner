@@ -368,7 +368,7 @@
 
     <footer>
       <span>© 2026 SiteShield</span>
-      <span>Questions? <a href="mailto:your@email.com">your@email.com</a></span>
+      <span>Questions? <a href="mailto:siteshieldcustomer@gmail.com">siteshieldcustomer@gmail.com</a></span>
     </footer>
   </div>
 
@@ -386,7 +386,7 @@
       results.style.display = 'none';
 
       try {
-        const res = await fetch(`http://127.0.0.1:5000/scan?url=${encodeURIComponent(url)}`);
+        const res = await fetch(`https://websecscanner-xtdd.onrender.com/scan?url=${encodeURIComponent(url)}`);
         const data = await res.json();
         renderResults(data);
       } catch (e) {
