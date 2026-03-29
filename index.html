@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SiteShield — Website Security Scanner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --border: #222222;
+      --accent: #00ff88;
+      --accent2: #ff3c3c;
+      --warn: #ffb800;
+      --text: #f0f0f0;
+      --muted: #555555;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      padding: 40px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    .logo span { color: var(--text); }
+
+    .contact-link {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .contact-link:hover { color: var(--accent); border-color: var(--accent); }
+
+    .hero { padding: 80px 0 50px; animation: fadeUp 0.6s ease both; }
+
+    .tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag::before { content: ''; width: 20px; height: 1px; background: var(--accent); }
+
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin-bottom: 20px;
+    }
+
+    h1 em { font-style: normal; color: var(--accent); }
+
+    .subtitle {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 500px;
+      margin-bottom: 40px;
+    }
+
+    .scanner-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px;
+      animation: fadeUp 0.6s 0.15s ease both;
+      opacity: 0;
+    }
+
+    .input-row { display: flex; gap: 10px; }
+
+    input[type="text"] {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.9rem;
+      padding: 14px 18px;
+      border-radius: 8px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus { border-color: var(--accent); }
+    input[type="text"]::placeholder { color: var(--muted); }
+
+    button {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      padding: 14px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    button:hover { opacity: 0.85; }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .disclaimer {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      margin-top: 24px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--accent);
+    }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    #results {
+      margin-top: 32px;
+      display: none;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .result-title {
+      font-size: 0.75rem;
+      font-family: 'Space Mono', monospace;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .scanned-url { font-size: 0.75rem; font-family: 'Space Mono', monospace; color: var(--accent); }
+
+    .section {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 18px 20px;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-family: 'Space Mono', monospace;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 12px;
+    }
+
+    .check-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 12px;
+    }
+
+    .check-row:last-child { border-bottom: none; }
+
+    .check-name { font-family: 'Space Mono', monospace; font-size: 0.78rem; color: var(--text); flex: 1; }
+    .check-msg { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); text-align: right; max-width: 50%; }
+
+    .badge {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .badge.good { background: rgba(0,255,136,0.1); color: var(--accent); border: 1px solid rgba(0,255,136,0.3); }
+    .badge.warning { background: rgba(255,184,0,0.1); color: var(--warn); border: 1px solid rgba(255,184,0,0.3); }
+    .badge.bad, .badge.error { background: rgba(255,60,60,0.1); color: var(--accent2); border: 1px solid rgba(255,60,60,0.3); }
+    .badge.missing { background: rgba(255,60,60,0.08); color: var(--accent2); border: 1px solid rgba(255,60,60,0.2); }
+    .badge.present { background: rgba(0,255,136,0.08); color: var(--accent); border: 1px solid rgba(0,255,136,0.2); }
+
+    .score-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .score-number { font-size: 3rem; font-weight: 800; line-height: 1; font-family: 'Space Mono', monospace; }
+    .score-label { font-size: 0.72rem; font-family: 'Space Mono', monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .score-desc { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+    footer {
+      padding: 60px 0 40px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      margin-top: 60px;
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 520px) {
+      .input-row { flex-direction: column; }
+      h1 { font-size: 2rem; }
+      footer { flex-direction: column; gap: 10px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">Site<span>Shield</span></div>
+      <a class="contact-link" href="mailto:your@email.com">your@email.com</a>
+    </header>
+
+    <section class="hero">
+      <div class="tag">Free Website Security Scanner</div>
+      <h1>Is your website<br/><em>actually secure?</em></h1>
+      <p class="subtitle">Scan any website in seconds. Check for missing security headers, SSL issues, server info leaks, and more. No signup required.</p>
+    </section>
+
+    <div class="scanner-box">
+      <div class="input-row">
+        <input type="text" id="urlInput" placeholder="Enter website URL (e.g. yoursite.com)" />
+        <button id="scanBtn" onclick="startScan()">Scan Now</button>
+      </div>
+      <p class="disclaimer">⚡ Free scan — results in seconds. Only scan websites you own or have permission to test.</p>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <span>Scanning target...</span>
+      </div>
+    </div>
+
+    <div id="results">
+      <div class="result-header">
+        <span class="result-title">Scan Report</span>
+        <span class="scanned-url" id="scannedUrl"></span>
+      </div>
+
+      <div class="score-box">
+        <div>
+          <div class="score-number" id="scoreNumber">--</div>
+        </div>
+        <div>
+          <div class="score-label">Security Score</div>
+          <div class="score-desc" id="scoreDesc"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">HTTPS & SSL</div>
+        <div class="check-row">
+          <span class="check-name">HTTPS Enforcement</span>
+          <span class="check-msg" id="httpsMsg"></span>
+          <span class="badge" id="httpsBadge"></span>
+        </div>
+        <div class="check-row">
+          <span class="check-name">SSL Certificate</span>
+          <span class="check-msg" id="sslMsg"></span>
+          <span class="badge" id="sslBadge"></span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Server Info Leak</div>
+        <div class="check-row">
+          <span class="check-name">Server Headers</span>
+          <span class="check-msg" id="serverMsg"></span>
+          <span class="badge" id="serverBadge"></span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Security Headers</div>
+        <div id="headersContainer"></div>
+      </div>
+    </div>
+
+    <footer>
+      <span>© 2026 SiteShield</span>
+      <span>Questions? <a href="mailto:your@email.com">your@email.com</a></span>
+    </footer>
+  </div>
+
+  <script>
+    async function startScan() {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) return;
+
+      const btn = document.getElementById('scanBtn');
+      const loading = document.getElementById('loading');
+      const results = document.getElementById('results');
+
+      btn.disabled = true;
+      loading.style.display = 'flex';
+      results.style.display = 'none';
+
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/scan?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+        renderResults(data);
+      } catch (e) {
+        alert('Could not connect to scanner. Make sure app.py is running.');
+      } finally {
+        btn.disabled = false;
+        loading.style.display = 'none';
+      }
+    }
+
+    function renderResults(data) {
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('scannedUrl').textContent = data.url;
+
+      setBadge('httpsBadge', 'httpsMsg', data.https_check);
+      setBadge('sslBadge', 'sslMsg', data.ssl_check);
+      setBadge('serverBadge', 'serverMsg', data.server_info);
+
+      const container = document.getElementById('headersContainer');
+      container.innerHTML = '';
+      for (const [name, val] of Object.entries(data.security_headers)) {
+        if (name === 'error') continue;
+        const row = document.createElement('div');
+        row.className = 'check-row';
+        row.innerHTML = `
+          <span class="check-name">${name}</span>
+          <span class="badge ${val.status}">${val.status.toUpperCase()}</span>
+        `;
+        container.appendChild(row);
+      }
+
+      const score = calcScore(data);
+      const scoreEl = document.getElementById('scoreNumber');
+      scoreEl.textContent = score + '/10';
+      scoreEl.style.color = score >= 7 ? 'var(--accent)' : score >= 4 ? 'var(--warn)' : 'var(--accent2)';
+      document.getElementById('scoreDesc').textContent =
+        score >= 7 ? 'Looking good! A few things to improve.' :
+        score >= 4 ? 'Some issues found. Action recommended.' :
+        'High risk. Several critical issues detected.';
+    }
+
+    function setBadge(badgeId, msgId, check) {
+      const badge = document.getElementById(badgeId);
+      const msg = document.getElementById(msgId);
+      badge.textContent = check.status.toUpperCase();
+      badge.className = 'badge ' + check.status;
+      msg.textContent = check.message || '';
+    }
+
+    function calcScore(data) {
+      let score = 10;
+      if (data.https_check.status !== 'good') score -= 2;
+      if (data.ssl_check.status !== 'good') score -= 2;
+      if (data.server_info.status !== 'good') score -= 1;
+      for (const val of Object.values(data.security_headers)) {
+        if (val.status === 'missing') score -= 0.8;
+      }
+      return Math.max(0, Math.round(score));
+    }
+
+    document.getElementById('urlInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') startScan();
+    });
+  </script>
+</body>
+</html>
