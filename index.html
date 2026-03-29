@@ -447,9 +447,14 @@
       return Math.max(0, Math.round(score));
     }
 function handlePay() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) {
+    alert('Please enter a website URL first!');
+    return;
+  }
+  localStorage.setItem('pendingUrl', url);
   window.location.href = "https://buy.stripe.com/9B66oI0iyaOmeXtaPraZi00";
-}
-    document.getElementById('urlInput').addEventListener('keydown', e => {
+}    document.getElementById('urlInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') startScan();
     });
   </script>
