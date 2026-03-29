@@ -140,7 +140,7 @@
     input[type="text"]::placeholder { color: var(--muted); }
 
     button {
-      background: var(--accent);
+      background: #7c3aed;
       color: #000;
       border: none;
       font-family: 'Syne', sans-serif;
@@ -312,7 +312,7 @@
     <div class="scanner-box">
       <div class="input-row">
         <input type="text" id="urlInput" placeholder="Enter website URL (e.g. yoursite.com)" />
-        <button id="scanBtn" onclick="startScan()">Scan Now</button>
+        <button id="scanBtn" onclick="handlePay()">PAY $1.99</button>
       </div>
       <p class="disclaimer">⚡ Free scan — results in seconds. Only scan websites you own or have permission to test.</p>
       <div class="loading" id="loading">
@@ -446,7 +446,9 @@
       }
       return Math.max(0, Math.round(score));
     }
-
+function handlePay() {
+  window.location.href = "https://buy.stripe.com/9B66oI0iyaOmeXtaPraZi00";
+}
     document.getElementById('urlInput').addEventListener('keydown', e => {
       if (e.key === 'Enter') startScan();
     });
