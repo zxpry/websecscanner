@@ -7,6 +7,23 @@ app = Flask(__name__)
 CORS(app)
 
 @app.route("/")
+@app.route("/admin")
+def admin():
+    secret = request.args.get("key")
+    if secret != os.environ.get("ADMIN_KEY"):
+        return jsonify({"error": "Unauthorized"}), 403
+    return send_from_directory('.', 'index.html')
+
+@app.route("/admin-scan", methods=["GET"])
+def admin_scan():
+    secret = request.args.get("key")
+    if secret != os.environ.get("ADMIN_KEY"):
+        return jsonify({"error": "Unauthorized"}), 403
+    url = request.args.get("url")
+    if not url:
+        return jsonify({"error": "No URL provided"}), 400
+    result = scan(url)
+    return jsonify(result)
 def index():
     return send_from_directory('.', 'index.html')
 
